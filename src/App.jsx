@@ -1,0 +1,385 @@
+import { useState } from "react";
+import {
+  Trash2,
+  ShoppingCart,
+  CheckCircle,
+  AlertTriangle,
+  Search,
+} from "lucide-react";
+
+export default function App() {
+  const [items, setItems] = useState([
+    {
+      id: 1,
+      name: "Milk",
+      quantity: 2,
+      priority: "High",
+      bought: false,
+    },
+    {
+      id: 2,
+      name: "Rice",
+      quantity: 1,
+      priority: "Medium",
+      bought: true,
+    },
+  ]);
+
+  const [product, setProduct] = useState("");
+  const [priority, setPriority] = useState("Medium");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  const addItem = () => {
+    if (!product.trim()) return;
+
+    const newItem = {
+      id: Date.now(),
+      name: product,
+      quantity: 1,
+      priority,
+      bought: false,
+    };
+
+    setItems([newItem, ...items]);
+    setProduct("");
+  };
+
+  const toggleBought = (id) => {
+    setItems(
+      items.map((item) =>
+        item.id === id
+          ? { ...item, bought: !item.bought }
+          : item
+      )
+    );
+  };
+
+  const deleteItem = (id) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
+
+  const increaseQty = (id) => {
+    setItems(
+      items.map((item) =>
+        item.id === id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      )
+    );
+  };
+
+  const decreaseQty = (id) => {
+    setItems(
+      items.map((item) =>
+        item.id === id && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+    );
+  };
+
+  const boughtCount = items.filter((item) => item.bought).length;
+  const pendingCount = items.length - boughtCount;
+
+  // FILTER LOGIC
+  const filteredItems = items.filter((item) => {
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    if (filter === "pending") {
+      return !item.bought && matchesSearch;
+    }
+
+    if (filter === "bought") {
+      return item.bought && matchesSearch;
+    }
+
+    return matchesSearch;
+  });
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "High":
+        return "bg-red-100 text-red-600";
+
+      case "Medium":
+        return "bg-yellow-100 text-yellow-700";
+
+      case "Low":
+        return "bg-green-100 text-green-700";
+
+      default:
+        return "bg-gray-100";
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
+
+      {/* SIDEBAR */}
+      <div className="w-full md:w-64 bg-white shadow-xl p-6">
+
+        <h1 className="text-3xl font-bold mb-10">
+          Shopping Tracker
+        </h1>
+
+        <div className="space-y-3">
+
+          {/* ALL ITEMS */}
+          <button
+            onClick={() => setFilter("all")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+              filter === "all"
+                ? "bg-slate-200 font-semibold"
+                : "hover:bg-slate-100"
+            }`}
+          >
+            <ShoppingCart size={20} />
+            All Items
+          </button>
+
+          {/* PENDING */}
+          <button
+            onClick={() => setFilter("pending")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+              filter === "pending"
+                ? "bg-yellow-100 font-semibold"
+                : "hover:bg-slate-100"
+            }`}
+          >
+            <AlertTriangle size={20} />
+            Pending
+          </button>
+
+          {/* BOUGHT */}
+          <button
+            onClick={() => setFilter("bought")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+              filter === "bought"
+                ? "bg-green-100 font-semibold"
+                : "hover:bg-slate-100"
+            }`}
+          >
+            <CheckCircle size={20} />
+            Bought
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 p-4 md:p-6">
+
+        {/* TOP SECTION */}
+        <div className="flex flex-col lg:flex-row justify-between gap-4 mb-6">
+
+          <div>
+            <h2 className="text-4xl font-bold">
+              Dashboard
+            </h2>
+
+            <p className="text-gray-500 mt-1">
+              Manage your shopping items easily
+            </p>
+          </div>
+
+          {/* SEARCH */}
+          <div className="flex items-center bg-white px-4 rounded-2xl shadow w-full lg:w-80">
+
+            <Search size={18} className="text-gray-400" />
+
+            <input
+              type="text"
+              placeholder="Search..."
+              className="outline-none p-3 w-full"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+
+          </div>
+
+        </div>
+
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+          <div className="bg-white rounded-2xl p-5 shadow">
+            <p className="text-gray-500">Total Items</p>
+
+            <h3 className="text-4xl font-bold mt-2">
+              {items.length}
+            </h3>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow">
+            <p className="text-gray-500">Pending</p>
+
+            <h3 className="text-4xl font-bold mt-2">
+              {pendingCount}
+            </h3>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow">
+            <p className="text-gray-500">Bought</p>
+
+            <h3 className="text-4xl font-bold mt-2">
+              {boughtCount}
+            </h3>
+          </div>
+
+        </div>
+
+        {/* ADD ITEM */}
+        <div className="bg-white rounded-2xl shadow p-5 mb-6">
+
+          <div className="flex flex-col md:flex-row gap-3">
+
+            <input
+              type="text"
+              placeholder="Enter product name..."
+              className="border p-3 rounded-xl flex-1"
+              value={product}
+              onChange={(e) => setProduct(e.target.value)}
+            />
+
+            <select
+              className="border p-3 rounded-xl"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+            >
+              <option>High</option>
+              <option>Medium</option>
+              <option>Low</option>
+            </select>
+
+            <button
+              onClick={addItem}
+              className="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800"
+            >
+              Add Item
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* TABLE HEADER */}
+        <div className="hidden md:grid grid-cols-5 bg-slate-200 rounded-t-2xl px-6 py-4 font-semibold text-gray-700">
+
+          <div>Items</div>
+          <div className="text-center">Priority</div>
+          <div className="text-center">Status</div>
+          <div className="text-center">Quantity</div>
+          <div className="text-center">Actions</div>
+
+        </div>
+
+        {/* ITEM LIST */}
+        <div className="bg-white rounded-b-2xl shadow overflow-hidden">
+
+          {filteredItems.map((item) => (
+
+            <div
+              key={item.id}
+              className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center px-6 py-5 border-b"
+            >
+
+              {/* ITEM */}
+              <div className="flex items-center gap-3">
+
+                <input
+                  type="checkbox"
+                  checked={item.bought}
+                  onChange={() => toggleBought(item.id)}
+                  className="w-5 h-5"
+                />
+
+                <h3
+                  className={`font-semibold text-lg ${
+                    item.bought
+                      ? "line-through text-gray-400"
+                      : ""
+                  }`}
+                >
+                  {item.name}
+                </h3>
+
+              </div>
+
+              {/* PRIORITY */}
+              <div className="md:text-center">
+
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${getPriorityColor(
+                    item.priority
+                  )}`}
+                >
+                  {item.priority}
+                </span>
+
+              </div>
+
+              {/* STATUS */}
+              <div className="md:text-center">
+
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    item.bought
+                      ? "bg-green-100 text-green-700"
+                      : "bg-purple-100 text-purple-700"
+                  }`}
+                >
+                  {item.bought ? "Bought" : "Pending"}
+                </span>
+
+              </div>
+
+              {/* QUANTITY */}
+              <div className="flex items-center gap-3 md:justify-center">
+
+                <button
+                  onClick={() => decreaseQty(item.id)}
+                  className="bg-slate-200 w-8 h-8 rounded-lg"
+                >
+                  -
+                </button>
+
+                <span className="font-semibold text-lg">
+                  {item.quantity}
+                </span>
+
+                <button
+                  onClick={() => increaseQty(item.id)}
+                  className="bg-slate-200 w-8 h-8 rounded-lg"
+                >
+                  +
+                </button>
+
+              </div>
+
+              {/* ACTIONS */}
+              <div className="md:text-center">
+
+                <button
+                  onClick={() => deleteItem(item.id)}
+                  className="bg-red-100 p-3 rounded-xl text-red-600 hover:bg-red-200"
+                >
+                  <Trash2 size={18} />
+                </button>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
