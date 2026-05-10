@@ -1,14 +1,4 @@
-import { db } from "./firebase";
-
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  deleteDoc,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-
+import { supabase } from "./supabase";
 import { useEffect } from "react";
 import { useState } from "react";
 import {
@@ -26,60 +16,78 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 useEffect(() => {
-  const unsubscribe = onSnapshot(
-    collection(db, "shoppingItems"),
-    (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setItems(data);
-    }
-  );
-
-  return () => unsubscribe();
+  fetchItems();
 }, []);
+
+const fetchItems = async () => {
+  const { data, error } = await supabase
+    .from("shoppingItems")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (!error) {
+    setItems(data);
+  }
+};
   const addItem = async () => {
   if (!product.trim()) return;
 
-  await addDoc(collection(db, "shoppingItems"), {
-    name: product,
-    quantity: 1,
-    priority,
-    bought: false,
-  });
+  await supabase
+    .from("shoppingItems")
+    .insert([
+      {
+        name: product,
+        quantity: 1,
+        priority,
+        bought: false,
+      },
+    ]);
 
   setProduct("");
+  fetchItems();
 };
-  const toggleBought = async (id, current) => {
-  const itemRef = doc(db, "shoppingItems", id);
+ const toggleBought = async (id, current) => {
+  await supabase
+    .from("shoppingItems")
+    .update({
+      bought: !current,
+    })
+    .eq("id", id);
 
-  await updateDoc(itemRef, {
-    bought: !current,
-  });
+  fetchItems();
 };
 
-  const deleteItem = async (id) => {
-  await deleteDoc(doc(db, "shoppingItems", id));
+ const deleteItem = async (id) => {
+  await supabase
+    .from("shoppingItems")
+    .delete()
+    .eq("id", id);
+
+  fetchItems();
 };
 
   const increaseQty = async (id, qty) => {
-  const itemRef = doc(db, "shoppingItems", id);
+  await supabase
+    .from("shoppingItems")
+    .update({
+      quantity: qty + 1,
+    })
+    .eq("id", id);
 
-  await updateDoc(itemRef, {
-    quantity: qty + 1,
-  });
+  fetchItems();
 };
 
-  const decreaseQty = async (id, qty) => {
+ const decreaseQty = async (id, qty) => {
   if (qty <= 1) return;
 
-  const itemRef = doc(db, "shoppingItems", id);
+  await supabase
+    .from("shoppingItems")
+    .update({
+      quantity: qty - 1,
+    })
+    .eq("id", id);
 
-  await updateDoc(itemRef, {
-    quantity: qty - 1,
-  });
+  fetchItems();
 };
 
   const boughtCount = items.filter((item) => item.bought).length;
