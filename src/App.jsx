@@ -1,6 +1,4 @@
-import { supabase } from "./supabase";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Trash2,
   ShoppingCart,
@@ -8,6 +6,14 @@ import {
   AlertTriangle,
   Search,
 } from "lucide-react";
+import {
+  db,
+  ref,
+  push,
+  onValue,
+  remove,
+  update,
+} from "./firebase";
 
 export default function App() {
   const [items, setItems] = useState([]);
@@ -16,78 +22,70 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 useEffect(() => {
-  fetchItems();
+  const itemsRef = ref(db, "shoppingitems");
+
+  onValue(itemsRef, (snapshot) => {
+    const data = snapshot.val();
+
+    if (data) {
+      const loadedItems = Object.keys(data).map(
+        (key) => ({
+          id: key,
+          ...data[key],
+        })
+      );
+
+      setItems(loadedItems.reverse());
+    } else {
+      setItems([]);
+    }
+  });
 }, []);
-
-const fetchItems = async () => {
-  const { data, error } = await supabase
-    .from("shoppingItems")
-    .select("*")
-    .order("id", { ascending: false });
-
-  if (!error) {
-    setItems(data);
-  }
-};
   const addItem = async () => {
   if (!product.trim()) return;
 
-  await supabase
-    .from("shoppingItems")
-    .insert([
-      {
-        name: product,
-        quantity: 1,
-        priority,
-        bought: false,
-      },
-    ]);
+  const itemsRef = ref(db, "shoppingitems");
+
+  await push(itemsRef, {
+    name: product,
+    quantity: 1,
+    priority,
+    bought: false,
+  });
 
   setProduct("");
-  fetchItems();
 };
  const toggleBought = async (id, current) => {
-  await supabase
-    .from("shoppingItems")
-    .update({
+  await update(
+    ref(db, `shoppingitems/${id}`),
+    {
       bought: !current,
-    })
-    .eq("id", id);
-
-  fetchItems();
+    }
+  );
 };
-
  const deleteItem = async (id) => {
-  await supabase
-    .from("shoppingItems")
-    .delete()
-    .eq("id", id);
-
-  fetchItems();
+  await remove(
+    ref(db, `shoppingitems/${id}`)
+  );
 };
-
   const increaseQty = async (id, qty) => {
-  await supabase
-    .from("shoppingItems")
-    .update({
+  await update(
+    ref(db, `shoppingitems/${id}`),
+    {
       quantity: qty + 1,
-    })
-    .eq("id", id);
-
-  fetchItems();
+    }
+  );
 };
 
  const decreaseQty = async (id, qty) => {
   if (qty <= 1) return;
 
-  await supabase
-    .from("shoppingItems")
-    .update({
+  await update(
+    ref(db, `shoppingitems/${id}`),
+    {
       quantity: qty - 1,
-    })
-    .eq("id", id);
-
-  fetchItems();
+    }
+  );
 };
 
   const boughtCount = items.filter((item) => item.bought).length;
