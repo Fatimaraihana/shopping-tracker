@@ -1,3 +1,15 @@
+import { db } from "./firebase";
+
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+
+import { useEffect } from "react";
 import { useState } from "react";
 import {
   Trash2,
@@ -8,76 +20,67 @@ import {
 } from "lucide-react";
 
 export default function App() {
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      name: "Milk",
-      quantity: 2,
-      priority: "High",
-      bought: false,
-    },
-    {
-      id: 2,
-      name: "Rice",
-      quantity: 1,
-      priority: "Medium",
-      bought: true,
-    },
-  ]);
-
+  const [items, setItems] = useState([]);
   const [product, setProduct] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+useEffect(() => {
+  const unsubscribe = onSnapshot(
+    collection(db, "shoppingItems"),
+    (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-  const addItem = () => {
-    if (!product.trim()) return;
+      setItems(data);
+    }
+  );
 
-    const newItem = {
-      id: Date.now(),
-      name: product,
-      quantity: 1,
-      priority,
-      bought: false,
-    };
+  return () => unsubscribe();
+}, []);
+  const addItem = async () => {
+  if (!product.trim()) return;
 
-    setItems([newItem, ...items]);
-    setProduct("");
-  };
+  await addDoc(collection(db, "shoppingItems"), {
+    name: product,
+    quantity: 1,
+    priority,
+    bought: false,
+  });
 
-  const toggleBought = (id) => {
-    setItems(
-      items.map((item) =>
-        item.id === id
-          ? { ...item, bought: !item.bought }
-          : item
-      )
-    );
-  };
+  setProduct("");
+};
+  const toggleBought = async (id, current) => {
+  const itemRef = doc(db, "shoppingItems", id);
 
-  const deleteItem = (id) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
+  await updateDoc(itemRef, {
+    bought: !current,
+  });
+};
 
-  const increaseQty = (id) => {
-    setItems(
-      items.map((item) =>
-        item.id === id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
-    );
-  };
+  const deleteItem = async (id) => {
+  await deleteDoc(doc(db, "shoppingItems", id));
+};
 
-  const decreaseQty = (id) => {
-    setItems(
-      items.map((item) =>
-        item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-    );
-  };
+  const increaseQty = async (id, qty) => {
+  const itemRef = doc(db, "shoppingItems", id);
+
+  await updateDoc(itemRef, {
+    quantity: qty + 1,
+  });
+};
+
+  const decreaseQty = async (id, qty) => {
+  if (qty <= 1) return;
+
+  const itemRef = doc(db, "shoppingItems", id);
+
+  await updateDoc(itemRef, {
+    quantity: qty - 1,
+  });
+};
 
   const boughtCount = items.filter((item) => item.bought).length;
   const pendingCount = items.length - boughtCount;
@@ -293,7 +296,7 @@ export default function App() {
                 <input
                   type="checkbox"
                   checked={item.bought}
-                  onChange={() => toggleBought(item.id)}
+                  onChange={() => toggleBought(item.id,item.bought)}
                   className="w-5 h-5"
                 />
 
@@ -341,7 +344,7 @@ export default function App() {
               <div className="flex items-center gap-3 md:justify-center">
 
                 <button
-                  onClick={() => decreaseQty(item.id)}
+                  onClick={() => decreaseQty(item.id,item.quantity)}
                   className="bg-slate-200 w-8 h-8 rounded-lg"
                 >
                   -
@@ -352,7 +355,7 @@ export default function App() {
                 </span>
 
                 <button
-                  onClick={() => increaseQty(item.id)}
+                  onClick={() => increaseQty(item.id,item.quantity)}
                   className="bg-slate-200 w-8 h-8 rounded-lg"
                 >
                   +
