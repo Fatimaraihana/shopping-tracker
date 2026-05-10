@@ -269,120 +269,122 @@ useEffect(() => {
 
         </div>
 
-        {/* TABLE HEADER */}
-        <div className="hidden md:grid grid-cols-5 bg-slate-200 rounded-t-2xl px-6 py-4 font-semibold text-gray-700">
+       {/* ITEM LIST */}
+<div className="space-y-4">
 
-          <div>Items</div>
-          <div className="text-center">Priority</div>
-          <div className="text-center">Status</div>
-          <div className="text-center">Quantity</div>
-          <div className="text-center">Actions</div>
+  {filteredItems.map((item) => (
 
-        </div>
+    <div
+      key={item.id}
+      className="bg-white rounded-2xl shadow-md p-5"
+    >
 
-        {/* ITEM LIST */}
-        <div className="bg-white rounded-b-2xl shadow overflow-hidden">
+      {/* TOP */}
+      <div className="flex justify-between items-start gap-4">
 
-          {filteredItems.map((item) => (
+        {/* LEFT */}
+        <div className="flex items-start gap-3">
 
-            <div
-              key={item.id}
-              className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center px-6 py-5 border-b"
+          <input
+            type="checkbox"
+            checked={item.bought}
+            onChange={() =>
+              toggleBought(item.id, item.bought)
+            }
+            className="w-5 h-5 mt-1"
+          />
+
+          <div>
+
+            <h2
+              className={`text-lg md:text-xl font-semibold ${
+                item.bought
+                  ? "line-through text-gray-400"
+                  : "text-gray-800"
+              }`}
             >
+              🛒 {item.name}
+            </h2>
 
-              {/* ITEM */}
-              <div className="flex items-center gap-3">
+            {/* TAGS */}
+            <div className="flex flex-wrap gap-2 mt-3">
 
-                <input
-                  type="checkbox"
-                  checked={item.bought}
-                  onChange={() => toggleBought(item.id,item.bought)}
-                  className="w-5 h-5"
-                />
+              <span
+                className={`px-3 py-1 rounded-full text-sm ${getPriorityColor(
+                  item.priority
+                )}`}
+              >
+                {item.priority}
+              </span>
 
-                <h3
-                  className={`font-semibold text-lg ${
-                    item.bought
-                      ? "line-through text-gray-400"
-                      : ""
-                  }`}
-                >
-                  {item.name}
-                </h3>
-
-              </div>
-
-              {/* PRIORITY */}
-              <div className="md:text-center">
-
-                <span
-                  className={`px-3 py-1 rounded-full text-sm ${getPriorityColor(
-                    item.priority
-                  )}`}
-                >
-                  {item.priority}
-                </span>
-
-              </div>
-
-              {/* STATUS */}
-              <div className="md:text-center">
-
-                <span
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    item.bought
-                      ? "bg-green-100 text-green-700"
-                      : "bg-purple-100 text-purple-700"
-                  }`}
-                >
-                  {item.bought ? "Bought" : "Pending"}
-                </span>
-
-              </div>
-
-              {/* QUANTITY */}
-              <div className="flex items-center gap-3 md:justify-center">
-
-                <button
-                  onClick={() => decreaseQty(item.id,item.quantity)}
-                  className="bg-slate-200 w-8 h-8 rounded-lg"
-                >
-                  -
-                </button>
-
-                <span className="font-semibold text-lg">
-                  {item.quantity}
-                </span>
-
-                <button
-                  onClick={() => increaseQty(item.id,item.quantity)}
-                  className="bg-slate-200 w-8 h-8 rounded-lg"
-                >
-                  +
-                </button>
-
-              </div>
-
-              {/* ACTIONS */}
-              <div className="md:text-center">
-
-                <button
-                  onClick={() => deleteItem(item.id)}
-                  className="bg-red-100 p-3 rounded-xl text-red-600 hover:bg-red-200"
-                >
-                  <Trash2 size={18} />
-                </button>
-
-              </div>
+              <span
+                className={`px-3 py-1 rounded-full text-sm ${
+                  item.bought
+                    ? "bg-green-100 text-green-700"
+                    : "bg-purple-100 text-purple-700"
+                }`}
+              >
+                {item.bought ? "Bought" : "Pending"}
+              </span>
 
             </div>
 
-          ))}
+          </div>
+
+        </div>
+
+        {/* DELETE */}
+        <button
+          onClick={() => deleteItem(item.id)}
+          className="bg-red-100 p-3 rounded-xl text-red-600 hover:bg-red-200 transition"
+        >
+          <Trash2 size={18} />
+        </button>
+
+      </div>
+
+      {/* QUANTITY */}
+      <div className="flex items-center justify-between mt-6">
+
+        <p className="text-gray-600 font-medium">
+          Quantity
+        </p>
+
+        <div className="flex items-center gap-3">
+
+          <button
+            onClick={() =>
+              decreaseQty(item.id, item.quantity)
+            }
+            className="bg-slate-200 w-9 h-9 rounded-lg text-lg hover:bg-slate-300"
+          >
+            -
+          </button>
+
+          <span className="font-bold text-lg">
+            {item.quantity}
+          </span>
+
+          <button
+            onClick={() =>
+              increaseQty(item.id, item.quantity)
+            }
+            className="bg-slate-200 w-9 h-9 rounded-lg text-lg hover:bg-slate-300"
+          >
+            +
+          </button>
 
         </div>
 
       </div>
 
+    </div>
+
+  ))}
+
+</div>
+
+      </div>
     </div>
   );
 }
